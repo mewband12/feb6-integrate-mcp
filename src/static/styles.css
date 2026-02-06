@@ -44,15 +44,9 @@ header h1 {
 
 main {
   display: flex;
-  flex-wrap: wrap;
-  gap: 30px;
-  justify-content: center;
-}
-
-@media (min-width: 768px) {
-  main {
-    grid-template-columns: 2fr 1fr;
-  }
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }
 
 section {
@@ -61,7 +55,7 @@ section {
   border-radius: 5px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 500px;
+  max-width: 800px;
 }
 
 section h3 {
@@ -178,6 +172,46 @@ button:hover {
   background-color: #3949ab;
 }
 
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+/* Register button on card */
+.register-btn {
+  margin-top: 15px;
+  width: 100%;
+  background-color: #4caf50;
+}
+
+.register-btn:hover {
+  background-color: #45a049;
+}
+
+.card-actions {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px dashed #ccc;
+}
+
+.auth-notice-card {
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  color: #856404;
+  padding: 8px;
+  border-radius: 4px;
+  margin: 15px 0 0 0;
+  text-align: center;
+  font-size: 14px;
+}
+
+.activity-name-display {
+  color: #1a237e;
+  font-weight: bold;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
 .message {
   margin-top: 20px;
   padding: 10px;
@@ -203,7 +237,9 @@ button:hover {
 }
 
 .hidden {
-  display: none;
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 footer {
