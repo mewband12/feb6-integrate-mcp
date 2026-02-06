@@ -5,11 +5,14 @@ A super simple FastAPI application that allows students to view and sign up
 for extracurricular activities at Mergington High School.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse
 import os
+import json
+import uuid
 from pathlib import Path
+from typing import Optional
 
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
@@ -18,6 +21,15 @@ app = FastAPI(title="Mergington High School API",
 current_dir = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
           "static")), name="static")
+
+# Load teachers data from JSON file
+teachers_file = os.path.join(Path(__file__).parent, "teachers.json")
+with open(teachers_file, "r") as f:
+    teachers_data = json.load(f)
+    teachers = teachers_data["teachers"]
+
+# In-memory session storage (maps session tokens to teacher emails)
+sessions = {}
 
 # In-memory activity database
 activities = {
@@ -88,9 +100,84 @@ def get_activities():
     return activities
 
 
+@app.post("/auth/login")
+def login(email: str, password: str, response: Response):
+    """Authenticate a teacher and create a session"""
+    # Check if teacher exists and password is correct
+    if email not in teachers:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    if teachers[email]["password"] != password:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    # Create session token
+    session_token = str(uuid.uuid4())
+    sessions[session_token] = email
+    
+    # Set session cookie
+    response.set_cookie(key="session_token", value=session_token, httponly=True)
+    
+    return {
+        "message": "Login successful",
+        "teacher_name": teachers[email]["name"],
+        "email": email
+    }
+
+
+@app.post("/auth/logout")
+def logout(response: Response, session_token: Optional[str] = Header(None, alias="Cookie")):
+    """Logout a teacher and destroy the session"""
+    # Extract session token from cookie
+    if session_token and "session_token=" in session_token:
+        token = session_token.split("session_token=")[1].split(";")[0]
+        if token in sessions:
+            del sessions[token]
+    
+    # Clear session cookie
+    response.delete_cookie(key="session_token")
+    
+    return {"message": "Logout successful"}
+
+
+@app.get("/auth/status")
+def auth_status(cookie: Optional[str] = Header(None)):
+    """Check if user is authenticated"""
+    # Extract session token from cookie
+    if not cookie or "session_token=" not in cookie:
+        return {"authenticated": False}
+    
+    token = cookie.split("session_token=")[1].split(";")[0]
+    
+    if token in sessions:
+        email = sessions[token]
+        return {
+            "authenticated": True,
+            "teacher_name": teachers[email]["name"],
+            "email": email
+        }
+    
+    return {"authenticated": False}
+
+
+def verify_teacher_session(cookie: Optional[str] = Header(None)) -> str:
+    """Verify that the request has a valid teacher session"""
+    if not cookie or "session_token=" not in cookie:
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
+    token = cookie.split("session_token=")[1].split(";")[0]
+    
+    if token not in sessions:
+        raise HTTPException(status_code=401, detail="Invalid or expired session")
+    
+    return sessions[token]
+
+
 @app.post("/activities/{activity_name}/signup")
-def signup_for_activity(activity_name: str, email: str):
-    """Sign up a student for an activity"""
+def signup_for_activity(activity_name: str, email: str, cookie: Optional[str] = Header(None)):
+    """Sign up a student for an activity (requires teacher authentication)"""
+    # Verify teacher is authenticated
+    verify_teacher_session(cookie)
+    
     # Validate activity exists
     if activity_name not in activities:
         raise HTTPException(status_code=404, detail="Activity not found")
@@ -111,8 +198,11 @@ def signup_for_activity(activity_name: str, email: str):
 
 
 @app.delete("/activities/{activity_name}/unregister")
-def unregister_from_activity(activity_name: str, email: str):
-    """Unregister a student from an activity"""
+def unregister_from_activity(activity_name: str, email: str, cookie: Optional[str] = Header(None)):
+    """Unregister a student from an activity (requires teacher authentication)"""
+    # Verify teacher is authenticated
+    verify_teacher_session(cookie)
+    
     # Validate activity exists
     if activity_name not in activities:
         raise HTTPException(status_code=404, detail="Activity not found")

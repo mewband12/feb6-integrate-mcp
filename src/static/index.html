@@ -8,9 +8,47 @@
   </head>
   <body>
     <header>
-      <h1>Mergington High School</h1>
-      <h2>Extracurricular Activities</h2>
+      <div class="header-content">
+        <div class="header-text">
+          <h1>Mergington High School</h1>
+          <h2>Extracurricular Activities</h2>
+        </div>
+        <div class="user-section">
+          <button id="user-icon" class="user-icon" title="Teacher Login">
+            <span class="icon">👤</span>
+          </button>
+          <div id="user-menu" class="user-menu hidden">
+            <div id="logged-out-menu" class="menu-content">
+              <button id="login-btn" class="menu-btn">Login</button>
+            </div>
+            <div id="logged-in-menu" class="menu-content hidden">
+              <p id="teacher-name" class="teacher-name"></p>
+              <button id="logout-btn" class="menu-btn">Logout</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </header>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal hidden">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Teacher Login</h3>
+        <form id="login-form">
+          <div class="form-group">
+            <label for="login-email">Email:</label>
+            <input type="email" id="login-email" required placeholder="teacher@mergington.edu" />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password:</label>
+            <input type="password" id="login-password" required />
+          </div>
+          <button type="submit">Login</button>
+        </form>
+        <div id="login-message" class="hidden"></div>
+      </div>
+    </div>
 
     <main>
       <section id="activities-container">
@@ -22,11 +60,14 @@
       </section>
 
       <section id="signup-container">
-        <h3>Sign Up for an Activity</h3>
+        <h3>Register Student for Activity</h3>
+        <p class="auth-notice" id="auth-notice">
+          <em>⚠️ Teacher login required to register or unregister students</em>
+        </p>
         <form id="signup-form">
           <div class="form-group">
             <label for="email">Student Email:</label>
-            <input type="email" id="email" required placeholder="your-email@mergington.edu" />
+            <input type="email" id="email" required placeholder="student@mergington.edu" />
           </div>
           <div class="form-group">
             <label for="activity">Select Activity:</label>
@@ -35,7 +76,7 @@
               <!-- Activity options will be loaded here -->
             </select>
           </div>
-          <button type="submit">Sign Up</button>
+          <button type="submit" id="signup-btn">Register Student</button>
         </form>
         <div id="message" class="hidden"></div>
       </section>
